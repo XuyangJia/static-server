@@ -10,7 +10,6 @@ import Directory from './components/Directory'
 export default {
   name: 'app',
   components: {
-    HelloWorld,
     Directory
   }
 }

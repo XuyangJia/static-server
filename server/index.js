@@ -1,11 +1,13 @@
 const path = require('path')
 const fse = require('fs-extra')
 const Koa = require('koa')
+const logger = require('koa-logger')
 const extname = path.extname
 const port = process.env.PORT || 8081
 const app = new Koa()
 const root = path.resolve(__dirname, '../dist')
 
+app.use(logger())
 app.use(async ctx => {
   const fpath = path.join(root, ctx.path)
   ctx.set('Access-Control-Allow-Origin', '*')
@@ -20,10 +22,12 @@ async function getData (fp) {
   } else {
     const files = await fse.readdir(fp)
     const items = files.map((name, id) => {
-      const stats = fse.statSync(path.join(fp, name))
+      const aFp = path.join(fp, name)
+      const stats = fse.statSync(aFp)
       const ctime = new Date(stats.ctime).toLocaleString()
       const size = bytesToSize(stats.size)
-      return { id, name, file: stats.isFile(), ctime, size }
+      const type = stats.isDirectory() ? 'dir' : getType(extname(aFp))
+      return { id, name, type, ctime, size }
     }).sort(obj => obj.file ? 1 : 0)
     return items
   }
@@ -39,4 +43,9 @@ function bytesToSize (bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+}
+
+function getType (ext) {
+  console.log(ext)
+  return 'pdf'
 }
