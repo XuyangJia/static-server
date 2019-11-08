@@ -1,19 +1,10 @@
 <template>
   <div id="app">
-    <Directory path="Welcome"/>
+    <transition>
+      <router-view></router-view>
+    </transition>
   </div>
 </template>
-
-<script>
-import Directory from './components/Directory'
-
-export default {
-  name: 'app',
-  components: {
-    Directory
-  }
-}
-</script>
 
 <style>
 #app {
