@@ -1,14 +1,16 @@
 const path = require('path')
 const fse = require('fs-extra')
 const Koa = require('koa')
+const koaBody = require('koa-body')
 const logger = require('koa-logger')
 const views = require('koa-views')
-const extname = path.extname
-const port = process.env.PORT || 8081
+const extname = path.extname 
+const port = process.env.PORT || 80
 const app = new Koa()
-const root = path.resolve(__dirname, '..')
+const root = __dirname
 
 app.use(logger())
+app.use(koaBody())
 
 // 加载模板引擎
 app.use(views(path.join(__dirname, './views'), {
@@ -25,7 +27,7 @@ app.use(async ctx => {
     ctx.body = fse.createReadStream(fpath)
   } else {
     let data = await getDirectoryData(fpath)
-    await ctx.render('index', { title: ctx.path, data })
+    await ctx.render('index', { data })
   }
 })
 app.listen(port, () => console.log(`app started at ${port}...`))
@@ -37,15 +39,26 @@ async function getDirectoryData (fp) {
     const stats = fse.statSync(aFp)
     const ctime = new Date(stats.ctime).toLocaleString()
     const size = bytesToSize(stats.size)
-    const href = '/' + path.relative(root, aFp)
-    const type = stats.isDirectory() ? 'dir' : getType(extname(aFp))
+    let href = '/' + path.relative(root, aFp)
+    let type = extname(aFp)
+    if (stats.isDirectory()) {
+      href += '/'
+      type = 'dir'
+    }
     return { id, name, type, ctime, size, href }
-  }).sort(obj => obj.file ? 1 : 0)
+  }).sort((a, b) => {
+    if (a.type === 'dir'  && b.type !== 'dir') {
+      return -1
+    } else if (a.type !== 'dir'  && b.type === 'dir') {
+      return 1
+    }
+    return 0
+  })
   return items
 }
 
 function isFile (fp) {
-  return fse.statSync(fp).isFile()
+  return fse.existsSync(fp) && fse.statSync(fp).isFile()
 }
 
 function bytesToSize (bytes) {
@@ -54,9 +67,4 @@ function bytesToSize (bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
-}
-
-function getType (ext) {
-  console.log(ext)
-  return 'pdf'
 }
