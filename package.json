@@ -2,7 +2,9 @@
   "name": "static-server",
   "version": "1.0.0",
   "private": true,
-  "scripts": {},
+  "scripts": {
+    "serve": "node app"
+  },
   "dependencies": {
     "ejs": "^2.7.1",
     "fs-extra": "^8.1.0",
